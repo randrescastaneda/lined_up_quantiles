@@ -72,11 +72,12 @@ qinterp_base <- function(x0, w0,
 
 
 
-compare_dists <- function(t,
-                          x0, x1,
-                          w0, w1,
-                          y0, y1,
-                          gf, z) {
+compare_dists <- function(t
+                          # x0, x1,
+                          # w0, w1,
+                          # y0, y1,
+                          # gf, z
+                          ) {
 
     x0t <- deflate_vector(x = x0,
                           gf = gf, # it must be named
