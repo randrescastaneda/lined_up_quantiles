@@ -21,18 +21,6 @@ deflate_vector <- \(x, gf, from_year, to_year) {
                 to_year = to_year) * x
 }
 
-
-
-# Weighted step-quantiles (left-inverse of CDF)
-wquantile <- function(x, w, probs) {
-  o  <- radixorder(x)
-  x  <- x[o]; w <- w[o]
-  cw <- fcumsum(w); W <- cw[length(cw)]
-
-  idx <- findInterval(probs * W, c(0, cw)) + 0L
-  x[pmax(1L, pmin(idx, length(x)))]
-}
-
 # Weighted CDF at a threshold z
 fgt0 <- function(x, w = rep(1, length(x)), z) fmean(x <= z , w = w)
 
