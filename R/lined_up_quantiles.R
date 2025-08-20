@@ -7,16 +7,21 @@ m0 <- 8
 m1 <- 10
 
 
-n0 <- 8000L; n1 <- 9000L
-x0 <- rlnorm(n0, meanlog = 8.9, sdlog = 0.55)   # year y0
-# normalize to ne mean
-x0 <- (m0/fmean(x0))*x0
+n0 <- 8000L
+n1 <- 9000L
 
+x0 <- rlnorm(n0, meanlog = 8.9, sdlog = 0.55)   # year y0
 x1 <- rlnorm(n1, meanlog = 9.1, sdlog = 0.60)   # year y1
-x1 <- (m1/fmean(x1))*x1
 
 w0 <- rexp(n0)
 w1 <- rexp(n1)
+
+# normalize to ne mean
+x0 <- (m0/fmean(x0, w = w0))*x0
+x1 <- (m1/fmean(x1, w = w1))*x1
+
+fmean(x0, w = w0)
+
 
 y0 <- 2000L
 y1 <- 2005L
