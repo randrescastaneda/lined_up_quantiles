@@ -1,4 +1,6 @@
 library(fastverse)
+source("R/utils.R")
+
 
 
 # =================== Simulate surveys & NA path ==================
@@ -19,8 +21,6 @@ w1 <- rexp(n1)
 # normalize to ne mean
 x0 <- (m0/fmean(x0, w = w0))*x0
 x1 <- (m1/fmean(x1, w = w1))*x1
-
-fmean(x0, w = w0)
 
 
 y0 <- 2000L
@@ -44,12 +44,12 @@ for (yr in yrs_i) {
   mu_na[yr] <- mu_na[yr-1L] * gf[yr-1L]
 }
 
-# Rescale the two original surveys to match NA means in their own years
-x0 <- x0 * (mu_na[as.character(y0)] / fmean(x0, w0))
-x1 <- x1 * (mu_na[as.character(y1)] / fmean(x1, w1))
 
 # Poverty line to track (absolute; PPP etc.)
-z <- unname(mu_na[as.character(y0)]) * 0.75
+z <- unname(mu_na[as.character(y0)]) * 0.5 # let's use half the mean
+z <- 3
 
 # Time-proximity weight on the earlier survey
-alpha_t <- function(t) (y1 - t) / (y1 - y0)
+alpha_t <- function(y0, y1, t) {
+  (y1 - t) / (y1 - y0)
+}
