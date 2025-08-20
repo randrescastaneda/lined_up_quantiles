@@ -1,6 +1,6 @@
 library(fastverse)
 source("R/utils.R")
-
+set.seed(123)
 
 
 # =================== Simulate surveys & NA path ==================
@@ -95,8 +95,9 @@ xqb <- qinterp_base(x0 = x0t,
 
 
 # compare FGTs
-fgt0(xqb$Q, z = z)
-
+H_qb <- fgt0(xqb$Q, z = z)
+mean_qb = fmean(xqb$Q)
+gini_qb = wbpip::md_compute_gini(xqb$Q, rep(1, length(xqb$Q)))
 
 # mixture vector
 x_mix <- c(x0t,x1t)
@@ -109,3 +110,36 @@ H_target <- alpha * H0t + (1 - alpha) * H1t
 g_mixture <- wbpip::md_compute_gini(x_mix, w_mix)
 H_mix     <- fgt0(x_mix, w_mix, z)
 mean_mix  <- fmean(x_mix, w = w_mix)
+
+
+data.table(
+  year = t,
+  alpha = alpha,
+  gini_mixture = g_mixture,
+  gini_qb = gini_qb,
+  H_mix = H_mix,
+  H_xqb = H_qb,
+  mean_mix = mean_mix,
+  mean_qb = mean_qb
+)
+
+
+
+
+# Quick visual:
+op <- par(mfrow = c(1,2))
+plot(res$year, res$gini_mixture, type="b", pch=19,
+     ylim=range(c(res$gini_mixture, res$gini_qinterp_constrained)),
+     xlab="Year", ylab="Gini", main="Gini paths")
+lines(res$year, res$gini_qinterp_constrained, type="b", pch=19, lty=2)
+legend("topleft", bty="n", lty=c(1,2), pch=19,
+       legend=c("Append/Mixture", "Quantile interp (poverty-matched)"))
+
+plot(res$year, res$H_mix, type="b", pch=19,
+     ylim=range(c(res$H_mix, res$H_qinterp_unconstrained)),
+     xlab="Year", ylab=sprintf("Poverty @ z=%.2f", z), main="Poverty")
+lines(res$year, res$H_qinterp_unconstrained, type="b", pch=19, lty=3)
+lines(res$year, res$H_qinterp_constrained,   type="b", pch=19, lty=2)
+legend("topright", bty="n", lty=c(1,3,2), pch=19,
+       legend=c("Mixture", "OT (raw)", "OT (poverty-matched)"))
+par(op)

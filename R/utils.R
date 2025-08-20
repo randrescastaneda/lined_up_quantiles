@@ -72,3 +72,63 @@ qinterp_base <- function(x0, w0,
 
 
 
+compare_dists <- function(t,
+                          x0, x1,
+                          w0, w1,
+                          y0, y1,
+                          gf, z) {
+
+    x0t <- deflate_vector(x = x0,
+                          gf = gf, # it must be named
+                          from_year = y0,
+                          to_year = t)
+
+
+    x1t <- deflate_vector(x = x1,
+                          gf = gf, # it must be named
+                          from_year = y1,
+                          to_year = t)
+
+
+    alpha <- alpha_t(y0 = y0,
+                     y1 = y1,
+                     t = t)
+
+
+
+    xqb <- qinterp_base(x0 = x0t,
+                        w0 = w0,
+                        x1 = x1t,
+                        w1 = w1,
+                        alpha = alpha) # X quantiles interpolated
+
+
+    # compare FGTs
+    H_qb <- fgt0(xqb$Q, z = z)
+    mean_qb = fmean(xqb$Q)
+    gini_qb = wbpip::md_compute_gini(xqb$Q, rep(1, length(xqb$Q)))
+
+    # mixture vector
+    x_mix <- c(x0t,x1t)
+    w_mix <- c(w0 * alpha, w1 * (1 - alpha))
+
+    H0t <- fgt0(x0t, w0, z)
+    H1t <- fgt0(x1t, w1, z)
+    H_target <- alpha * H0t + (1 - alpha) * H1t
+
+    g_mixture <- wbpip::md_compute_gini(x_mix, w_mix)
+    H_mix     <- fgt0(x_mix, w_mix, z)
+    mean_mix  <- fmean(x_mix, w = w_mix)
+
+
+    data.table(
+      year = t,
+      alpha = alpha,
+      gini_mixture = g_mixture,
+      gini_qb = gini_qb,
+      H_mix = H_mix,
+      H_xqb = H_qb,
+      mean_mix = mean_mix,
+      mean_qb = mean_qb
+    )
+}
