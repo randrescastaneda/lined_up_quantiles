@@ -15,11 +15,21 @@ n1 <- 9000L
 x0 <- rlnorm(n0, meanlog = 8.9, sdlog = 0.55)   # year y0
 x1 <- rlnorm(n1, meanlog = 9.1, sdlog = 0.60)   # year y1
 
-
-
-
 w0 <- rexp(n0)
 w1 <- rexp(n1)
+
+# sort vectors
+o0 <- radixorder(x0)
+o1 <- radixorder(x1)
+
+x0 <- x0[o0]
+x1 <- x1[o1]
+
+w0 <- w0[o0]
+w1 <- w1[o1]
+
+
+
 
 # normalize to ne mean
 x0 <- (m0/fmean(x0, w = w0))*x0
@@ -54,6 +64,9 @@ z <- 3
 
 # vectors in t
 
+
+# =================== New vectors ==================
+
 t <- 2002
 
 x0t <- deflate_vector(x = x0,
@@ -62,25 +75,37 @@ x0t <- deflate_vector(x = x0,
                       to_year = t)
 
 
-
-fquantile(x = x0,
-         w = w0,
-         probs = c(.1, .5),
-         names = FALSE)
-
-fgt0(x = x0,
-        w = w0,
-        z = 6.8036977)
+x1t <- deflate_vector(x = x1,
+                      gf = gf, # it must be named
+                      from_year = y1,
+                      to_year = t)
 
 
+alpha <- alpha_t(y0 = y0,
+                 y1 = y1,
+                 t = t)
 
 
 
+xqb <- qinterp_base(x0 = x0t,
+                    w0 = w0,
+                    x1 = x1t,
+                    w1 = w1,
+                    alpha = alpha) # X quantiles interpolated
 
 
+# compare FGTs
+fgt0(xqb$Q, z = z)
 
 
+# mixture vector
+x_mix <- c(x0t,x1t)
+w_mix <- c(w0 * alpha, w1 * (1 - alpha))
 
+H0t <- fgt0(x0t, w0, z)
+H1t <- fgt0(x1t, w1, z)
+H_target <- alpha * H0t + (1 - alpha) * H1t
 
-
-
+g_mixture <- wbpip::md_compute_gini(x_mix, w_mix)
+H_mix     <- fgt0(x_mix, w_mix, z)
+mean_mix  <- fmean(x_mix, w = w_mix)

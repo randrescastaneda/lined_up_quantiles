@@ -34,7 +34,7 @@ wquantile <- function(x, w, probs) {
 }
 
 # Weighted CDF at a threshold z
-fgt0 <- function(x, w, z) fmean(x <= z , w = w)
+fgt0 <- function(x, w = rep(1, length(x)), z) fmean(x <= z , w = w)
 
 
 
@@ -46,21 +46,26 @@ alpha_t <- function(y0, y1, t) {
 
 
 
-# OT/Wasserstein interpolation (unconstrained)
+# OT/ type 7 interpolation (unconstrained)
 qinterp_base <- function(x0, w0,
                          x1, w1,
-                         g0 = 1, g1 = 1,
                          alpha,
-                         ngrid = 1e5L,
-                         mu_target = NULL) {
-  p   <- (seq_len(ngrid) - 0.5) / ngrid
-  Q0  <- fquantile(x0 * g0, w0, p)
-  Q1  <- fquantile(x1 * g1, w1, p)
+                         nbins = 1e5L,
+                         mu_target = NULL,
+                         g0 = 1, g1 = 1
+                         ) {
+  p   <- (seq_len(nbins) - 0.5) / nbins
+
+  Q0  <- fquantile(x0 * g0, w = w0, probs =  p, names = FALSE)
+  Q1  <- fquantile(x1 * g1, w = w1, probs =  p, names = FALSE)
+
   Qb  <- alpha * Q0 + (1 - alpha) * Q1
   if (!is.null(mu_target)) {
     s <- mu_target / fmean(Qb)
-    Qb <- Qb * s
+  } else {
+    s <- (fmean(x = x0t, w = w0)*alpha + fmean(x = x1t, w = w1)*(1-alpha))/fmean(Qb)
   }
+  Qb <- Qb * s
   list(p = p, Q = Qb)
 }
 
