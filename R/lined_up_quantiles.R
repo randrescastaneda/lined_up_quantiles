@@ -1,4 +1,6 @@
 library(fastverse)
+library(ggplot2)
+library(patchwork) # for combining plots
 source("R/utils.R")
 set.seed(123)
 
@@ -67,79 +69,45 @@ z <- 3
 
 # =================== New vectors ==================
 
-t <- 2002
+res <- lapply(years, compare_dists) |>
+  rbindlist()
 
-x0t <- deflate_vector(x = x0,
-                      gf = gf, # it must be named
-                      from_year = y0,
-                      to_year = t)
-
-
-x1t <- deflate_vector(x = x1,
-                      gf = gf, # it must be named
-                      from_year = y1,
-                      to_year = t)
-
-
-alpha <- alpha_t(y0 = y0,
-                 y1 = y1,
-                 t = t)
-
-
-
-xqb <- qinterp_base(x0 = x0t,
-                    w0 = w0,
-                    x1 = x1t,
-                    w1 = w1,
-                    alpha = alpha) # X quantiles interpolated
-
-
-# compare FGTs
-H_qb <- fgt0(xqb$Q, z = z)
-mean_qb = fmean(xqb$Q)
-gini_qb = wbpip::md_compute_gini(xqb$Q, rep(1, length(xqb$Q)))
-
-# mixture vector
-x_mix <- c(x0t,x1t)
-w_mix <- c(w0 * alpha, w1 * (1 - alpha))
-
-H0t <- fgt0(x0t, w0, z)
-H1t <- fgt0(x1t, w1, z)
-H_target <- alpha * H0t + (1 - alpha) * H1t
-
-g_mixture <- wbpip::md_compute_gini(x_mix, w_mix)
-H_mix     <- fgt0(x_mix, w_mix, z)
-mean_mix  <- fmean(x_mix, w = w_mix)
-
-
-data.table(
-  year = t,
-  alpha = alpha,
-  gini_mixture = g_mixture,
-  gini_qb = gini_qb,
-  H_mix = H_mix,
-  H_xqb = H_qb,
-  mean_mix = mean_mix,
-  mean_qb = mean_qb
-)
+res[]
 
 
 
 
-# Quick visual:
-op <- par(mfrow = c(1,2))
-plot(res$year, res$gini_mixture, type="b", pch=19,
-     ylim=range(c(res$gini_mixture, res$gini_qinterp_constrained)),
-     xlab="Year", ylab="Gini", main="Gini paths")
-lines(res$year, res$gini_qinterp_constrained, type="b", pch=19, lty=2)
-legend("topleft", bty="n", lty=c(1,2), pch=19,
-       legend=c("Append/Mixture", "Quantile interp (poverty-matched)"))
+# Gini plot
+res_long_gini <- melt(res, id.vars = "year",
+                      measure.vars = c("gini_mixture", "gini_qb", "gini_avg"),
+                      variable.name = "method", value.name = "gini")
+p_gini <- ggplot(res_long_gini, aes(x = year, y = gini, color = method, linetype = method)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Gini paths", x = "Year", y = "Gini") +
+  theme_minimal()
 
-plot(res$year, res$H_mix, type="b", pch=19,
-     ylim=range(c(res$H_mix, res$H_qinterp_unconstrained)),
-     xlab="Year", ylab=sprintf("Poverty @ z=%.2f", z), main="Poverty")
-lines(res$year, res$H_qinterp_unconstrained, type="b", pch=19, lty=3)
-lines(res$year, res$H_qinterp_constrained,   type="b", pch=19, lty=2)
-legend("topright", bty="n", lty=c(1,3,2), pch=19,
-       legend=c("Mixture", "OT (raw)", "OT (poverty-matched)"))
-par(op)
+# Poverty plot
+res_long_pov <- melt(res, id.vars = "year",
+                     measure.vars = c("H_mix", "H_xqb", "H_target"),
+                     variable.name = "method", value.name = "poverty")
+p_pov <- ggplot(res_long_pov, aes(x = year, y = poverty, color = method, linetype = method)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Poverty paths", x = "Year", y = "Poverty") +
+  theme_minimal()
+
+# Mean plot
+res_long_mean <- melt(res, id.vars = "year",
+                      measure.vars = c("mean_mix", "mean_qb", "mean_target"),
+                      variable.name = "method", value.name = "mean")
+p_mean <- ggplot(res_long_mean, aes(x = year, y = mean, color = method, linetype = method)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  labs(title = "Mean paths", x = "Year", y = "Mean") +
+  theme_minimal()
+
+# Combine plots side by side
+(p_gini | p_pov | p_mean)
+
+

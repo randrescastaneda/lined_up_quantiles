@@ -63,7 +63,7 @@ qinterp_base <- function(x0, w0,
   if (!is.null(mu_target)) {
     s <- mu_target / fmean(Qb)
   } else {
-    s <- (fmean(x = x0t, w = w0)*alpha + fmean(x = x1t, w = w1)*(1-alpha))/fmean(Qb)
+    s <- (fmean(x = x0, w = w0)*alpha + fmean(x = x1, w = w1)*(1-alpha))/fmean(Qb)
   }
   Qb <- Qb * s
   list(p = p, Q = Qb)
@@ -96,15 +96,15 @@ compare_dists <- function(t
                      t = t)
 
 
-
+    # X quantiles interpolated
     xqb <- qinterp_base(x0 = x0t,
                         w0 = w0,
                         x1 = x1t,
                         w1 = w1,
-                        alpha = alpha) # X quantiles interpolated
+                        alpha = alpha)
 
 
-    # compare FGTs
+    # quantile measures
     H_qb <- fgt0(xqb$Q, z = z)
     mean_qb = fmean(xqb$Q)
     gini_qb = wbpip::md_compute_gini(xqb$Q, rep(1, length(xqb$Q)))
@@ -112,14 +112,18 @@ compare_dists <- function(t
     # mixture vector
     x_mix <- c(x0t,x1t)
     w_mix <- c(w0 * alpha, w1 * (1 - alpha))
-
-    H0t <- fgt0(x0t, w0, z)
-    H1t <- fgt0(x1t, w1, z)
-    H_target <- alpha * H0t + (1 - alpha) * H1t
-
     g_mixture <- wbpip::md_compute_gini(x_mix, w_mix)
     H_mix     <- fgt0(x_mix, w_mix, z)
     mean_mix  <- fmean(x_mix, w = w_mix)
+
+    # Target measures
+    H0t         <- fgt0(x0t, w0, z)
+    H1t         <- fgt0(x1t, w1, z)
+    mean_target <- alpha * fmean(x0t, w = w0) + (1 - alpha) * fmean(x1t, w = w1)
+    H_target    <- alpha * H0t + (1 - alpha) * H1t
+    gini_avg    <- alpha * wbpip::md_compute_gini(x0t, w0) +
+      (1 - alpha) * wbpip::md_compute_gini(x1t, w1)
+
 
 
     data.table(
@@ -127,9 +131,12 @@ compare_dists <- function(t
       alpha = alpha,
       gini_mixture = g_mixture,
       gini_qb = gini_qb,
+      gini_avg = gini_avg,
       H_mix = H_mix,
       H_xqb = H_qb,
+      H_target = H_target,
       mean_mix = mean_mix,
-      mean_qb = mean_qb
+      mean_qb = mean_qb,
+      mean_target = mean_target
     )
 }
