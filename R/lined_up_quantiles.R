@@ -15,6 +15,9 @@ n1 <- 9000L
 x0 <- rlnorm(n0, meanlog = 8.9, sdlog = 0.55)   # year y0
 x1 <- rlnorm(n1, meanlog = 9.1, sdlog = 0.60)   # year y1
 
+
+
+
 w0 <- rexp(n0)
 w1 <- rexp(n1)
 
@@ -49,7 +52,35 @@ for (yr in yrs_i) {
 z <- unname(mu_na[as.character(y0)]) * 0.5 # let's use half the mean
 z <- 3
 
-# Time-proximity weight on the earlier survey
-alpha_t <- function(y0, y1, t) {
-  (y1 - t) / (y1 - y0)
-}
+# vectors in t
+
+t <- 2002
+
+x0t <- deflate_vector(x = x0,
+                      gf = gf, # it must be named
+                      from_year = y0,
+                      to_year = t)
+
+
+
+fquantile(x = x0,
+         w = w0,
+         probs = c(.1, .5),
+         names = FALSE)
+
+fgt0(x = x0,
+        w = w0,
+        z = 6.8036977)
+
+
+
+
+
+
+
+
+
+
+
+
+
