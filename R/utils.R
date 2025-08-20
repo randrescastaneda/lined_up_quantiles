@@ -27,44 +27,28 @@ fgt0 <- function(x, w = rep(1, length(x)), z) fmean(x <= z , w = w)
 
 
 
-fgt <- function(x, w, z) {
+fgt <- function(x, w = rep(1, length(x)), z) {
 
   n <- length(x)
   m <- length(z)
 
   # Pre-allocate result matrix
-  res <- matrix(NA_real_, nrow = m, ncol = 3)
-  colnames(res) <- c("FGT0", "FGT1", "FGT2")
-  watts_vec <- numeric(m)
+  res <- matrix(NA_real_, nrow = m, ncol = 1)
+  colnames(res) <- c("FGT0")
 
   # Precompute log(w) for efficiency
   logw <- rep(NA_real_, n)
   pos <- x > 0
   logw[pos] <- log(x[pos])
 
-  for (i in seq_along(povlines)) {
-    pov <- povlines[i]
+  for (i in seq_along(z)) {
+    pov <- z[i]
     poor <- x < pov
-    rel_dist <- 1 - (x / pov)
-    rel_dist[!poor] <- 0
     res[i, 1] <- fmean(poor, w = w) # FGT0
-    res[i, 2] <- fmean(rel_dist, w = w) # FGT1
-    res[i, 3] <- fmean(rel_dist^2, w = w) # FGT2
-
-    # Optimized Watts index calculation
-    keep <- poor & pos
-    if (any(keep, na.rm = TRUE)) {
-      watts_vec[i] <- (fsum((log(pov) - logw[keep]) * w[keep])) / fsum(w)
-    } else {
-      watts_vec[i] <- 0
-    }
   }
   data.table(
-    povline = povlines,
-    headcount = res[, 1],
-    poverty_gap = res[, 2],
-    poverty_severity = res[, 3],
-    watts = watts_vec
+    povline = z,
+    headcount = res[, 1]
   )
 }
 
