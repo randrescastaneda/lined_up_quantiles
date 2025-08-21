@@ -65,11 +65,35 @@ z <- unname(mu_na[as.character(y0)]) * 0.5 # let's use half the mean
 z <- 3
 
 # vectors in t
+t <- 2002
+xvc <- get_xvects(t = t,
+                  x0 = x0,
+                  x1 = x1,
+                  w0 = w0,
+                  w1 = w1,
+                  y0 = y0,
+                  y1 = y1,
+                  gf = gf)
 
+nbins <- c(
+  seq(0.01)
+)
+
+fgt(x = xvc$x0t, w = w0, z = )
 
 # =================== New vectors ==================
 
-res <- lapply(years, compare_dists) |>
+res <- lapply(years, \(t) {
+  compare_dists(t = t,
+                x0 = x0,
+                x1 = x1,
+                w0 = w0,
+                w1 = w1,
+                y0 = y0,
+                y1 = y1,
+                gf = gf,
+                z = z)
+  }) |>
   rbindlist()
 
 res[]

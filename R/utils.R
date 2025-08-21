@@ -26,7 +26,7 @@ fgt0 <- function(x, w = rep(1, length(x)), z) fmean(x <= z , w = w)
 
 
 
-
+# multiple poverty lines
 fgt <- function(x, w = rep(1, length(x)), z) {
 
   n <- length(x)
@@ -88,11 +88,11 @@ qinterp_base <- function(x0, w0,
 
 
 
-compare_dists <- function(t
-                          # x0, x1,
-                          # w0, w1,
-                          # y0, y1,
-                          # gf, z
+compare_dists <- function(t,
+                          x0, x1,
+                          w0, w1,
+                          y0, y1,
+                          gf, z
                           ) {
 
     x0t <- deflate_vector(x = x0,
@@ -155,4 +155,69 @@ compare_dists <- function(t
       mean_qb = mean_qb,
       mean_target = mean_target
     )
+}
+
+
+get_xvects <- \(t,
+                x0, x1,
+                w0, w1,
+                y0, y1,
+                gf
+                ) {
+
+  x0t <- deflate_vector(x = x0,
+                        gf = gf, # it must be named
+                        from_year = y0,
+                        to_year = t)
+
+
+  x1t <- deflate_vector(x = x1,
+                        gf = gf, # it must be named
+                        from_year = y1,
+                        to_year = t)
+
+
+  alpha <- alpha_t(y0 = y0,
+                   y1 = y1,
+                   t = t)
+
+
+  # X quantiles interpolated
+  xqb <- qinterp_base(x0 = x0t,
+                      w0 = w0,
+                      x1 = x1t,
+                      w1 = w1,
+                      alpha = alpha)
+
+  list(x0t = x0t,
+       x1t = x1t,
+       xqb = xqb
+  )
+
+
+}
+
+
+
+# Sample n observations from x (no weights in output), enriching the left tail
+sample_left_tail <- function(x, n = 1000,
+                             w = rep_len(1, length(x)),
+                             tilt = 0.8,
+                             replace = FALSE) {
+  stopifnot(exprs = {
+    n > 0
+    n <= length(x) || replace
+    length(w) == length(x)
+    all(w >= 0)
+    })
+
+
+  # Rank in (0,1]; smaller x -> larger (1 - r)
+  r <- frankv(x, ties.method = "average") / length(x)
+  # Tail tilt: multiply baseline weights by (1 - r)^tilt  (decreasing in x)
+  p <- w * (1 - r)^tilt
+  p <- p / fsum(p)
+
+  idx <- sample.int(length(x), size = n, replace = replace, prob = p)
+  list(idx = idx, x = x[idx])
 }
