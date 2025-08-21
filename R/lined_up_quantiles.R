@@ -75,13 +75,31 @@ xvc <- get_xvects(t = t,
                   y1 = y1,
                   gf = gf)
 
+# take sample of first survey only
 plines <- sample_left_tail(x = xvc$x0t,
                            w = w0,
                            n  = 1e4L,
-                           tilt = .9)
+                           tilt = .9,
+                           sort = TRUE)
+
+# weighted CDF at...
+xcdf <- plines$x
+cdf0 <- wcdf_at(x = xvc$x0t, w = w0, z = xcdf)
+cdf1 <- wcdf_at(x = xvc$x1t, w = w1, z = xcdf)
+mcdf <- matrix(c(cdf0$p, cdf1$p), nrow = 2)
+
+pcdf <- fmean(mcdf, w = c(xvc$alpha, (1-xvc$alpha)))
+wcdf    <- c(pcdf[1], diff(pcdf))
 
 
-fgt(x = xvc$x0t, w = w0, z = plines$x)
+fgt0(x = xcdf, w = wcdf, z = 3)
+fgt0(x = xvc$x0t, w = w0, z = 3)
+fgt0(x = xvc$x1t, w = w1, z = 3)
+
+
+
+
+
 
 # =================== New vectors ==================
 

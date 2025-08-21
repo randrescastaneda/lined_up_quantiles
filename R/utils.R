@@ -26,8 +26,8 @@ fgt0 <- function(x, w = rep(1, length(x)), z) fmean(x <= z , w = w)
 
 
 
-# multiple poverty lines
-fgt <- function(x, w = rep(1, length(x)), z) {
+# It is better call  weighted CDF at...
+wcdf_at <- function(x, w = rep(1, length(x)), z) {
 
   n <- length(x)
   m <- length(z)
@@ -46,10 +46,8 @@ fgt <- function(x, w = rep(1, length(x)), z) {
     poor <- x < pov
     res[i, 1] <- fmean(poor, w = w) # FGT0
   }
-  data.table(
-    povline = z,
-    headcount = res[, 1]
-  )
+
+  list(p = res[, 1], Q = z)
 }
 
 
@@ -191,7 +189,8 @@ get_xvects <- \(t,
 
   list(x0t = x0t,
        x1t = x1t,
-       xqb = xqb
+       xqb = xqb,
+       alpha = alpha
   )
 
 
@@ -204,7 +203,10 @@ sample_left_tail <- function(x,
                              w = rep_len(1, length(x)),
                              n = 1000,
                              tilt = 0.8,
-                             replace = FALSE) {
+                             replace = FALSE,
+                             sort = FALSE) {
+  n <- n - 2 # to include min and max
+
   stopifnot(exprs = {
     n > 0
     n <= length(x) || replace
@@ -212,17 +214,22 @@ sample_left_tail <- function(x,
     all(w >= 0)
     })
 
+
+
   # Rank in (0,1]; smaller x -> larger (1 - r)
   r <- frankv(x, ties.method = "average") / length(x)
   # Tail tilt: multiply baseline weights by (1 - r)^tilt  (decreasing in x)
-  # tilt = 0 → plain weighted sampling by w.
-  # Larger tilt → stronger enrichment of the left tail.
+  # tilt = 0would be plain weighted sampling by w.
+  # Larger tilt then stronger enrichment of the left tail.
   # This keeps the selection smooth across the support and avoids empty gaps.
   p <- w * (1 - r)^tilt
   p <- p / fsum(p)
 
   idx <- sample.int(length(x), size = n, replace = replace, prob = p)
-  o   <- radixorder(idx)
-  idx <- idx[o]
+  idx <- c(whichv(x, fmin(x)), idx, whichv(x, fmax(x)))
+  if (sort) {
+    o   <- radixorder(idx)
+    idx <- idx[o]
+  }
   list(idx = idx, x = x[idx])
 }
