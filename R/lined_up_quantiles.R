@@ -11,8 +11,8 @@ m0 <- 8
 m1 <- 10
 
 
-n0 <- 8000L
-n1 <- 9000L
+n0 <- 80000L
+n1 <- 90000L
 
 x0 <- rlnorm(n0, meanlog = 8.9, sdlog = 0.55)   # year y0
 x1 <- rlnorm(n1, meanlog = 9.1, sdlog = 0.60)   # year y1
@@ -75,11 +75,13 @@ xvc <- get_xvects(t = t,
                   y1 = y1,
                   gf = gf)
 
-nbins <- c(
-  seq(0.01)
-)
+plines <- sample_left_tail(x = xvc$x0t,
+                           w = w0,
+                           n  = 1e4L,
+                           tilt = .9)
 
-fgt(x = xvc$x0t, w = w0, z = )
+
+fgt(x = xvc$x0t, w = w0, z = plines$x)
 
 # =================== New vectors ==================
 

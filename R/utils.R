@@ -66,7 +66,7 @@ alpha_t <- function(y0, y1, t) {
 qinterp_base <- function(x0, w0,
                          x1, w1,
                          alpha,
-                         nbins = 1e5L,
+                         nbins = 1e4L,
                          mu_target = NULL,
                          g0 = 1, g1 = 1
                          ) {
@@ -200,8 +200,9 @@ get_xvects <- \(t,
 
 
 # Sample n observations from x (no weights in output), enriching the left tail
-sample_left_tail <- function(x, n = 1000,
+sample_left_tail <- function(x,
                              w = rep_len(1, length(x)),
+                             n = 1000,
                              tilt = 0.8,
                              replace = FALSE) {
   stopifnot(exprs = {
@@ -211,13 +212,17 @@ sample_left_tail <- function(x, n = 1000,
     all(w >= 0)
     })
 
-
   # Rank in (0,1]; smaller x -> larger (1 - r)
   r <- frankv(x, ties.method = "average") / length(x)
   # Tail tilt: multiply baseline weights by (1 - r)^tilt  (decreasing in x)
+  # tilt = 0 → plain weighted sampling by w.
+  # Larger tilt → stronger enrichment of the left tail.
+  # This keeps the selection smooth across the support and avoids empty gaps.
   p <- w * (1 - r)^tilt
   p <- p / fsum(p)
 
   idx <- sample.int(length(x), size = n, replace = replace, prob = p)
+  o   <- radixorder(idx)
+  idx <- idx[o]
   list(idx = idx, x = x[idx])
 }
